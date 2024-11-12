@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Data Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            color: #333;
+        }
+        .data-container {
+            width: 90%;
+            max-width: 600px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #chart-container {
+            width: 90%;
+            max-width: 800px;
+            margin-top: 30px;
+        }
+    </style>
+    <!-- Include Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Sensor Data Display</h1>
+    <div class="data-container" id="data-container">
+        Loading data...
+    </div>
+
+    <!-- Chart container -->
+    <div id="chart-container">
+        <canvas id="sensorChart"></canvas>
+    </div>
+
+    <script>
+        async function fetchData() {
+            const response = await fetch('http://127.0.0.1:5000/api/suhu');
+            const data = await response.json();
+
+            // Displaying raw data
+            document.getElementById('data-container').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+
+            // Prepare data for the chart
+            const timestamps = [];
+            const suhuValues = [];
+            const humidValues = [];
+            const kecerahanValues = [];
+
+            // Parse and collect data for the chart
+            Object.values(data.nilai_suhu_max_humid_max).forEach(item => {
+                timestamps.push(item.timestamp);
+                suhuValues.push(item.suhu);
+                humidValues.push(item.humid);
+                kecerahanValues.push(item.kecerahan);
+            });
+
+            // Create the chart
+            const ctx = document.getElementById('sensorChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',  // Line chart
+                data: {
+                    labels: timestamps,
+                    datasets: [
+                        {
+                            label: 'Suhu (°C)',
+                            data: suhuValues,
+                            borderColor: 'rgb(255, 99, 132)',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Humidity (%)',
+                            data: humidValues,
+                            borderColor: 'rgb(54, 162, 235)',
+                            fill: false,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Kecerahan',
+                            data: kecerahanValues,
+                            borderColor: 'rgb(75, 192, 192)',
+                            fill: false,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            type: 'category',
+                            labels: timestamps,
+                            title: {
+                                display: true,
+                                text: 'Timestamp'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Value'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        fetchData();
+    </script>
+</body>
+</html>
